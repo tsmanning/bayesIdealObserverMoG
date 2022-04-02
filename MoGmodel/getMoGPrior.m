@@ -1,5 +1,8 @@
 function [prior] = getMoGPrior(gam,nu,w,thisSupport)
 
+% Given a set of parameters and a support vector, define a mixture of
+% Gaussians prior.
+
 % Ensure weights sum to 1
 w = w/sum(w);
 

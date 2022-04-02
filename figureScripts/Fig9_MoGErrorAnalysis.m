@@ -1,4 +1,4 @@
-%% Figure 7 - Error in 2AFC approximation: zero-centered heavy tailed MoG
+%% Figure 9 - Error in 2AFC approximation: zero-centered heavy tailed MoG
 
 clear all
 close all
@@ -13,8 +13,10 @@ saveOn = 0;
 %% Load in data from error analysis
 
 % Run testAnalyError.m (with priorConsts set to 'longTail') to obtain this data
-simDir = '/media/tyler/Data/MATLAB/cooperLab/4-Papers/MoGpaper/';
-load([simDir,'widePrior_wider2ndcomp'],'estErrors','estErrSG','simMat')
+splPath = regexp(which('Fig9_MoGErrorAnalysis'),filesep,'split');
+topDir  = [fullfile(splPath{1:numel(splPath)-2}),filesep];
+
+load([topDir,'longTail'],'estErrors','estErrSG','simMat')
 
 
 %% Error scatters
@@ -57,6 +59,9 @@ peakRMSE = round(1.3*max(abs([RMSE RMSE_SG])),1,'significant');
 
 %% Generate an example prior and likelihood pair like those used in error simulation
 
+% Select an index from the error simulation
+exind = 82;
+
 % Define bounds for stimuli/measurements
 stimBnds    = [-1 1];
 
@@ -67,33 +72,22 @@ prScale     = 3;
 % Set max number of components in prior
 maxComps    = 2;
 
-% Randomly select two stimuli, define random measurement distributions
-x1   = rand*stimBnds(2)*2 - stimBnds(2);
-mu1  = x1;
-sig1 = rand*stimBnds(2)*0.5;
+% Get noise and stimulus parameters for this simulation run
+mu1  = simMat(exind).mu1;
+sig1 = simMat(exind).sig1;
 
-x2   = rand*stimBnds(2)*2 - stimBnds(2);
-mu2  = x2;
-sig2 = rand*stimBnds(2)*0.5;
+mu2  = simMat(exind).mu2;
+sig2 = simMat(exind).sig2;
 
-% Define support centered on 2D likelihood peak, extend to 4SD (99.994% AUC) and
-% choose granularity of 8SD units/dx
+% Define support granularity
 dx       = 300;
 
-suppLB1  = x1-4*sig1;
-suppUB1  = x1+4*sig1;
-support1 = linspace(suppLB1,suppUB1,dx);
+% Get prior parameters for this simulation run
+priorWs1   = simMat(exind).priorWs;
+priorMus1  = simMat(exind).priorMus;
+priorSigs1 = simMat(exind).priorSigs;
 
-% Define a random prior
-% Constrain prior s.t. it has a long tail and means are both zero
-numComps1  = randi(maxComps-1) + 1;
-
-priorWs1   = rand(1,numComps1);
-priorWs1   = priorWs1/sum(priorWs1);
-priorMus1  = zeros(1,numComps1);
-priorSigs1 = [1.1*max([sig1 sig2]) max([sig1 sig2])*(1.75 + rand(1,numComps1-1)*prScale)];
-
-% Make the prior and determine the best-fitting single Gaussian
+% Make the prior
 suppLBP1     = min(priorMus1) - 3*max(priorSigs1);
 suppUBP1     = max(priorMus1) + 3*max(priorSigs1);
 suppPrior1   = linspace(suppLBP1,suppUBP1,dx);
@@ -101,7 +95,81 @@ suppPrior1   = linspace(suppLBP1,suppUBP1,dx);
 [thisPrior1]  = getMoGPrior(priorSigs1,priorMus1,priorWs1,suppPrior1);
 
 
+%% Fill out res of psychometric function for other test velocities
+
+numTestVels = 20;
+
+pFxnNum = nan(numTestVels,1);
+pFxnAna = nan(numTestVels,1);
+pFxnSG  = nan(numTestVels,1);
+    
+exSig1    = simMat(exind).sig1;
+exSig2    = simMat(exind).sig2;
+
+priorMus  = simMat(exind).priorMus;
+priorSigs = simMat(exind).priorSigs;
+priorWs   = simMat(exind).priorWs;
+
+mu1       = simMat(exind).mu1;
+
+[~,maxComp] = max(simMat(exind).priorWs);
+maxSig      = max([exSig1 exSig2]);
+pseEst      = mu1*(simMat(exind).priorSigs(maxComp)^2 + exSig2^2)/(simMat(exind).priorSigs(maxComp)^2 + exSig1^2);
+testMus     = linspace(pseEst - 4*max([exSig1 exSig2]), pseEst + 4*max([exSig1 exSig2]),numTestVels-1);
+testMus     = sort([testMus simMat(exind).x2]);
+
+suppLB1  = mu1 - 4*exSig1;
+suppUB1  = mu1 + 4*exSig1;
+support1 = linspace(suppLB1,suppUB1,dx);
+
+sgMu     = simMat(exind).sgMu;
+sgSig    = simMat(exind).sgSig;
+
+for ii = 1:numTestVels
+    
+    thisTestMu = testMus(ii);
+    
+    suppLB2  = thisTestMu - 4*exSig2;
+    suppUB2  = thisTestMu + 4*exSig2;
+    support2 = linspace(suppLB2,suppUB2,dx);
+    
+    % Numerically calculate psychometric function
+    pFxnNum(ii) = calcMoGPFxn_Numeric(support1,support2,priorMus,priorSigs,priorWs,mu1,exSig1,thisTestMu,exSig2,0);
+    
+    % Analytically calculate psychometric function
+    pFxnAna(ii) = calcMoGPFxn_Analytic(priorMus,priorSigs,priorWs,mu1,exSig1,thisTestMu,exSig2);
+    
+    % Analytically calculate psychometric function from best-fitting single Gaussian
+    % (analytical approximation reduces down to exact solution to single
+    % Gaussian for a single component)
+    pFxnSG(ii)  = calcMoGPFxn_Analytic(sgMu,sgSig,[1],mu1,exSig1,thisTestMu,exSig2);
+    
+end
+
+
 %% Plot
+
+% Scatter with numerical evaluation/MoG/SG on same plot
+%-----------------------------%
+f0 = figure;
+f0.Position = [200 800 600 500];
+hold on;
+
+plot(testMus,pFxnNum,'k','linewidth',4);
+plot(testMus,pFxnAna,'color',colorMat(1,:),'linewidth',4);
+plot(testMus,pFxnSG,'color',colorMat(3,:),'linewidth',4);
+
+scatter(simMat(exind).x2,simMat(exind).pFxnNum,120,[0 0 0],'filled');
+scatter(simMat(exind).x2,simMat(exind).pFxnAna,120,colorMat(1,:),'filled');
+scatter(simMat(exind).x2,simMat(exind).pFxnSG,120,colorMat(3,:),'filled');
+
+plot([testMus(1) simMat(exind).x2],simMat(exind).pFxnNum*[1 1],'--k','linewidth',2);
+plot([testMus(1) simMat(exind).x2],simMat(exind).pFxnAna*[1 1],'color',colorMat(1,:),'linewidth',2,'linestyle','--');
+plot([testMus(1) simMat(exind).x2],simMat(exind).pFxnSG*[1 1],'color',colorMat(3,:),'linewidth',2,'linestyle','--');
+
+set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',[testMus(1) testMus(end)],'ylim',[0 1],'ytick',[0 0.5 1]);
+xlabel('Stimulus (x_{2})');
+ylabel('p("x_{2} > x_{1}")');
 
 % Error scatter single Gaussian fit
 %-----------------------------%
@@ -110,7 +178,8 @@ f1.Position = [100 300 600 500];
 hold on;
 
 plot([0 1],[0 1],'--k','linewidth',4);
-s1 = scatter(pNum,pSG,60,colorMat(2,:),'filled');
+s1 = scatter(pNum,pSG,60,colorMat(3,:),'filled');
+scatter(pNum(exind),pSG(exind),120,[0 0 0],'linewidth',4);
 set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',[0 1],'ylim',[0 1],'ytick',[0 0.5 1],'xtick',[0 0.5 1]);
 xlabel('Numerical evaluation');
 ylabel('SG approximation');
@@ -124,6 +193,7 @@ hold on;
 
 plot([0 1],[0 1],'--k','linewidth',4);
 s2 = scatter(pNum,pAna,60,colorMat(1,:),'filled');
+scatter(pNum(exind),pAna(exind),120,[0 0 0],'linewidth',4);
 set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',[0 1],'ylim',[0 1],'ytick',[0 0.5 1],'xtick',[0 0.5 1]);
 xlabel('Numerical evaluation');
 ylabel('MoG approximation');
@@ -137,7 +207,7 @@ hold on;
 
 plot([0 1],[0 0],'color',[0.15 0.15 0.15]);
 p1 = plot(binCents,MSE,'color',colorMat(1,:),'linewidth',5);
-p2 = plot(binCents,MSE_SG,'color',colorMat(2,:),'linewidth',5);
+p2 = plot(binCents,MSE_SG,'color',colorMat(3,:),'linewidth',5);
 set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'ylim',0.12*[-1 1],'xtick',[0 0.5 1],'ytick',0.12*linspace(-1,1,5));
 xlabel('Numerical evaluation');
 ylabel('Mean signed error');
@@ -151,7 +221,7 @@ hold on;
 
 plot([0 1],[0 0],'color',[0.15 0.15 0.15]);
 p3 = plot(binCents,RMSE,'color',colorMat(1,:),'linewidth',5);
-p4 = plot(binCents,RMSE_SG,'color',colorMat(2,:),'linewidth',5);
+p4 = plot(binCents,RMSE_SG,'color',colorMat(3,:),'linewidth',5);
 set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'ylim',[0 0.12],'xtick',[0 0.5 1],'ytick',0.12*linspace(0,1,5));
 xlabel('Numerical evaluation');
 ylabel('RMS error');
@@ -180,9 +250,7 @@ legend([p1 p2 p3],{'Prior','Likelihood 1','Likelihood 2'},'location','northwest'
 
 if saveOn
     
-    splPath = regexp(which('Fig7_MoGErrorAnalysis'),filesep,'split');
-    topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
-    sDir = [topDir,'figuresImgs/fig7/'];
+    sDir = [topDir,'figuresImgs/fig9/'];
     
     if ~isfolder(sDir)
         mkdir(sDir)

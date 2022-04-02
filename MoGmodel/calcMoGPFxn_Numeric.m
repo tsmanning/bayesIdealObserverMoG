@@ -42,6 +42,7 @@ end
 % Mask likelihood with decision matrix and integrate above boundary
 pFxn = sum(decisionMask(:).*like2D(:)) + 0.5*sum(decisionBoundary(:).*like2D(:));
 
+% Plot joint likelihood function masked by decision boundary
 if plotOn
    
     f1 = figure;

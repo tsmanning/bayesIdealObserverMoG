@@ -1,9 +1,9 @@
-function [signse,prihat,bwtshat,Lval,Mposthat] = fitBLSobserverModel_estimdata(x,xhat,Pbasis,xgrid,mgrid,prs0)
-% [signse,prihat,bwtshat,Mposthat] = fitBLSobserverModel_estimdata(x,xhat,Pbasis,xgrid,mgrid,prs0)
-%
+function [signse,prihat,bwtshat,Lval,Mposthat] = fitEstimData_numerical(x,xhat,Pbasis,xgrid,mgrid,prs0)
+
 % Fit Bayesian ideal observer model with fixed Gaussian noise from observer
 % estimate data, consisting of pairs of stimuli 'x' and observer estimates
-% 'x_hat'.
+% 'x_hat'. Numerically calculates the negative log-likelihood of the data
+% using equation 48 from the main paper text.
 %
 % Inputs:
 % -------
@@ -29,35 +29,41 @@ function [signse,prihat,bwtshat,Lval,Mposthat] = fitBLSobserverModel_estimdata(x
 % Extract sizes & initialize 
 % ----------------------------
 
-[nX,nB] = size(Pbasis); % size of basis
+% Define size of basis
+[nX,nB] = size(Pbasis);
 
+% Ensure basis for prior and xgrid are equal
 if nX ~= length(xgrid)
     error('Mismatch in xgrid and size of basis for prior');
 end
 
-dx = diff(xgrid(1:2));
+% Normalize basis vectors so they sum to 1
+dx     = diff(xgrid(1:2));
 Pbasis = bsxfun(@times,Pbasis,1./sum(Pbasis))/dx;
 
 % Make sure vector arguments are column vectors
-x = x(:); xhat=xhat(:); xgrid=xgrid(:); mgrid=mgrid(:);
+x     = x(:); 
+xhat  = xhat(:); 
+xgrid = xgrid(:); 
+mgrid = mgrid(:);
 
 % Initialize parameters, if necessary
-if nargin<6
-    wts0 = normpdf(1:nB,(nB+1)/2,nB/4)';
-    wts0 = wts0./sum(wts0); % initial value of MoG weights
+if nargin < 6
+    wts0       = normpdf(1:nB,(nB+1)/2,nB/4)';
+    wts0       = wts0./sum(wts0); % initial value of MoG weights
     logsignse0 = log(std(x-xhat)); % initial estimate of noise stdev
-    prs0 = [logsignse0;wts0];
+    prs0       = [logsignse0;wts0];
 end
 
 Dat = [x,xhat];  % stimulus and stimulus estimates
 
 % ----------------------------
-% Extract sizes & initialize 
+% Numerically optimize negative log-likelihood
 % ----------------------------
 
 % bounds for parameters
-LB = [-10; zeros(nB,1)]; % lower bound
-UB = [10;ones(nB,1)];  % upper bound
+LB  = [-10; zeros(nB,1)]; % lower bound
+UB  = [10;ones(nB,1)];  % upper bound
 Aeq = [0, ones(1,nB)]; % equality constraint (prior sums to 1)
 beq = 1;  % equality constraint)
 
@@ -75,29 +81,27 @@ prshat = fmincon(lossfun,prs0,[],[],Aeq,beq,LB,UB,[],opts);
 % Extract fitted parameters 
 % ----------------------------
 
-signse = exp(prshat(1));
+signse  = exp(prshat(1));
 bwtshat = prshat(2:end);
-prihat = Pbasis*bwtshat;
+prihat  = Pbasis*bwtshat;
 
 if nargout > 3
     [negLval,Mposthat] = lossfun(prshat);
     Lval = -negLval;  % log-likelihood at optimum
 end
 
+end
 
 % ===================================================================
 % LOSS FUNCTION: negative log-likelihood 
 % ===================================================================
-function [L,Mpost] = neglogli_BaysObsModel(prs,Dat,Pbasis,xgrid,mgrid)
+function [nll,Mpost] = neglogli_BaysObsModel(prs,Dat,Pbasis,xgrid,mgrid)
 % Computes negative log-likelihood of data (for optimization)
 
-% finv = @(x)interp1(BLSestim,m,x,'linear','extrap');
-% dfinv = @(x)(interp1(BLSestim,finitediff(m)./finitediff(BLSestim),x,'linear','extrap'));
-
-dx = diff(xgrid(1:2)); % grid spacing
+dx   = diff(xgrid(1:2)); % grid spacing
 npts = size(Dat,1); % number of grid points
 
-sig = exp(prs(1)); % make sure noise stdev is positive
+sig  = exp(prs(1)); % make sure noise stdev is positive
 wprs = prs(2:end);
 wprs = min(max(wprs,0),1);  % enforce that weights \in [0,1]
 wprs = wprs./sum(wprs);  % enforce equality constraint
@@ -135,6 +139,6 @@ dxhat = interp1(xBLS,finitediff(mgrid)./finitediff(xBLS),Dat(:,2),'linear','extr
 dxhat = max(dxhat,1e-100);
 
 % Compute negative log-likelihood of data
-L = sum((mvals-Dat(:,1)).^2)/(2*sig.^2) + npts*log(sig) - sum(log(dxhat));
+nll = sum((mvals-Dat(:,1)).^2)/(2*sig.^2) + npts*log(sig) - sum(log(dxhat));
 
-
+end

@@ -1,4 +1,4 @@
-%% Figure 9 - Demo showing how to constrain number of parameters
+%% Figure 7 - Demo showing how to constrain number of parameters
 
 clear all
 close all
@@ -9,8 +9,11 @@ suppUB = 5;
 dx     = 300;
 supp   = linspace(suppLB,suppUB,dx);
 
-% get color mat
+% Define color palette used for plotting
 colorMat = colororder;
+
+% Toggle on/off saving figures
+saveOn = 1;
 
 
 %% Restrict components to zero mean
@@ -19,10 +22,10 @@ colorMat = colororder;
 numCompsZM = 5;
 
 % Define component parameters
-wComp   = rand(1,5);
+wComp   = [0.24 0.08 0.16 0.23 0.29];
 wComp   = wComp/sum(wComp);
 muComp  = zeros(1,numCompsZM);
-sigComp = rand(1,5)*suppUB*0.5;
+sigComp = [2.20 1.8 1.2 0.6 0.2];
 
 % Make prior from components
 priorZM = zeros(1,dx);
@@ -62,7 +65,7 @@ end
 %% Plot both approaches
 
 f1 = figure;
-f1.Position = [100 100 1450 650];
+f1.Position = [100 100 1250 650];
 hold on;
 
 % Zero-mean
@@ -71,14 +74,16 @@ hold on;
 
 for ii = 1:numCompsZM
     if ii == numCompsZM
-        p1 = plot(supp,wComp(ii)*normpdf(supp,muComp(ii),sigComp(ii)),'k','linewidth',2);
+        p1 = plot(supp,wComp(ii)*normpdf(supp,muComp(ii),sigComp(ii)),'k','linewidth',4);
     else
-        plot(supp,wComp(ii)*normpdf(supp,muComp(ii),sigComp(ii)),'k','linewidth',2);
+        plot(supp,wComp(ii)*normpdf(supp,muComp(ii),sigComp(ii)),'k','linewidth',4);
     end
 end
-p2 = plot(supp,priorZM,'color',colorMat(2,:),'linewidth',2);
-set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',[suppLB suppUB],'xtick',[],'ytick',[]);
+p2 = plot(supp,priorZM,'color',colorMat(2,:),'linewidth',4);
+set(gca,'plotboxaspectratio',[1 1 1],'fontsize',30,'xlim',[suppLB suppUB],'xtick',[],'ytick',[]);
 legend([p1,p2],{'Components','Prior'},'location','northwest','box','off');
+ylabel('Probability');
+xlabel('Stimulus (x)');
 
 % Fixed-components
 subplot(1,2,2);
@@ -87,29 +92,31 @@ hold on;
 
 for ii = 1:numCompsTile
     if ii == numCompsTile
-        p3 = plot(supp,compWeights(ii)*normpdf(supp,compCents(ii),compWidths(ii)),'k','linewidth',2);
+        p3 = plot(supp,compWeights(ii)*normpdf(supp,compCents(ii),compWidths(ii)),'k','linewidth',4);
     else
-        plot(supp,compWeights(ii)*normpdf(supp,compCents(ii),compWidths(ii)),'k','linewidth',2);
+        plot(supp,compWeights(ii)*normpdf(supp,compCents(ii),compWidths(ii)),'k','linewidth',4);
     end
 end
-p4 = plot(supp,priorTile,'color',colorMat(2,:),'linewidth',2);
-set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',[suppLB suppUB],'xtick',[],'ytick',[],'ylim',[0 4]);
+p4 = plot(supp,priorTile,'color',colorMat(2,:),'linewidth',4);
+set(gca,'plotboxaspectratio',[1 1 1],'fontsize',30,'xlim',[suppLB suppUB],'xtick',[],'ytick',[],'ylim',[0 4]);
 legend([p3,p4],{'Components','Prior'},'location','northwest','box','off');
+ylabel('Probability');
+xlabel('Stimulus (x)');
 
 
 %% Save figures
 
 if saveOn
     
-    splPath = regexp(which('Fig9_MoGConstrainedFitting'),filesep,'split');
-    topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
-    sDir = [topDir,'figuresImgs/fig9/'];
+    splPath = regexp(which('Fig7_MoGConstrainedFitting'),filesep,'split');
+    topDir  = [filesep,fullfile(splPath{1:numel(splPath)-1}),filesep];
+    sDir = [topDir,'figuresImgs/fig7/'];
     
     if ~isfolder(sDir)
         mkdir(sDir)
     end
     
-    saveas(f1,[sDir,'MoGConstrainedFitting.svg']);
+    saveas(f1,[sDir,'Fig7_constraintExamples.svg']);
     
 end
 

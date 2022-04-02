@@ -1,5 +1,5 @@
-%% Fig 10 - Fit an observer model with a constrained mixture of Gaussians prior with estimate data
-% BIMODAL PRIOR
+%% Fig 8 - Fit an observer model with a constrained mixture of Gaussians prior with estimate data
+% CAUCHY PRIOR
 
 close all
 clear all
@@ -18,8 +18,14 @@ xgrid     = (xrnge(1)+dx/2:dx:xrnge(2))';   % stimulus grid
 % mgrid = (mrnge(1)+dx/2:dx:mrnge(2))';     % internal measurement grid
 mgrid     = -8:dx:8;                        % (just keep it fixed for paper figure)
 
-% Define a bimodal prior
-prior = normpdf(xgrid,-2,1) + normpdf(xgrid,2,1);   % gaussian
+% Define a prior
+priortype = 3;  % valid options: 1 = gaussian, 2 = exp, 3 = cauchy
+
+switch priortype
+    case 1, prior = normpdf(xgrid,0,2);   % gaussian
+    case 2, prior = exp(-abs(xgrid))/2;   % exponential
+    case 3, prior = (1./(1+xgrid.^2))/pi; % cauchy
+end
 
 prior = prior/sum(prior*dx); % normalize the prior to sum to 1
 %------------------%
@@ -57,12 +63,13 @@ mdat  = xdat + randn(nsmps,1)*lSig;                    % observer's noisy measur
 xhat = interp1(mgrid,BLSestim,mdat,'linear','extrap');
 
 
-%% Set up basis of Gaussians for MOG prior
+%% Set up non-fitted parameters of constrained MoG prior
 
 % Define Gaussian basis set 
-nbasis  = 16;                                 % number of Gaussian basis functions for prior 
-bctrs   = linspace(xrnge(1),xrnge(2),nbasis); % prior means
-bsigs   = ones(1,nbasis);                     % prior standard deviations
+nbasis  = 6;                                 % number of Gaussian basis functions for prior 
+bctrs   = zeros(1,nbasis);                   % prior means
+sigshft = 2;                                 % shift the location of first sigma
+bsigs   = (2.^(0-sigshft:nbasis-1-sigshft)); % prior standard deviations
 
 % Make basis set
 basisFun = @(x,mus,sigs)(exp(-0.5*(x-mus).^2./sigs.^2)./(sqrt(2*pi)*sigs));
@@ -144,15 +151,15 @@ xlabel('Stimulus (x)');  ylabel('Measurement (m)');
 
 if saveOn
     
-    splPath = regexp(which('Fig10_MoGtoNonGauss2'),filesep,'split');
+    splPath = regexp(which('Fig8_MoGtoNonGauss'),filesep,'split');
     topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
-    sDir = [topDir,'figuresImgs/fig10/'];
+    sDir = [topDir,'figuresImgs/fig8/'];
     
     if ~isfolder(sDir)
         mkdir(sDir)
     end
     
-    saveas(f1,[sDir,'MoGtoNonGauss2.svg']);
+    saveas(f1,[sDir,'MoGtoNonGauss.svg']);
     
 end
 
