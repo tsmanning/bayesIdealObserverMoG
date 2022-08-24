@@ -82,7 +82,7 @@ gbasis   = gbasis./(dx*sum(gbasis));    % normalize so each sums to 1
 
 % Use maximum likelihood estimation to determine best fitting weights for
 % basis functions of MoG prior given the dataset
-[signsehat,priorhat,bwtshat,logliFinal,Mposthat] = fitBLSobserverModel_estimdata(xdat,xhat,gbasis,xgrid,mgrid);
+[signsehat,priorhat,bwtshat,logliFinal,Mposthat] = fitEstimData_numerical(xdat,xhat,gbasis,xgrid,mgrid);
 
 % inferred BLS estimate for each m value
 BLSestimhat = Mposthat*xgrid*dx; 

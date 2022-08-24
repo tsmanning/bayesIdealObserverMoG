@@ -132,13 +132,18 @@ while any(diff(xBLS)<=0)
     mgrid(ii)=[];
 end
 
-% Compute m value for each reported xhat
-mvals = interp1(xBLS,mgrid,Dat(:,2),'linear','extrap');
+if ~isempty(mgrid)
+    % Compute m value for each reported xhat
+    mvals = interp1(xBLS,mgrid,Dat(:,2),'linear','extrap');
 
-dxhat = interp1(xBLS,finitediff(mgrid)./finitediff(xBLS),Dat(:,2),'linear','extrap');
-dxhat = max(dxhat,1e-100);
+    dxhat = interp1(xBLS,finitediff(mgrid)./finitediff(xBLS),Dat(:,2),'linear','extrap');
+    dxhat = max(dxhat,1e-100);
 
-% Compute negative log-likelihood of data
-nll = sum((mvals-Dat(:,1)).^2)/(2*sig.^2) + npts*log(sig) - sum(log(dxhat));
+    % Compute negative log-likelihood of data
+    nll = sum((mvals-Dat(:,1)).^2)/(2*sig.^2) + npts*log(sig) - sum(log(dxhat));
+else
+    % If all values were pruned, just spike the NLL to infinity
+    nll = inf;
+end
 
 end
