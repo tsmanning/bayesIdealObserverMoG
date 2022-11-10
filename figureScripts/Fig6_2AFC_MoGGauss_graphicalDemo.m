@@ -28,7 +28,7 @@ prior  = getMoGPrior(pGam,pNu,pW,supp);
 %------------------% 
 
 % Toggle on/off saving figures
-saveOn = 0;
+saveOn = 1;
 
 
 %% Stimulus Combination 1
@@ -82,13 +82,16 @@ pf3_plot = nan(numX2,1);
 for ii = 1:numel(twoAFCStim)
     
     if ii == (numX2/2 + 0.5)
+        % Don't recalculate values aready calculated
         pf1_plot(ii) = pf1;
         pf2_plot(ii) = pf2;
         pf3_plot(ii) = pf3;
     else
+        % Define numerical supports
         pf1_plot(ii) = get2AFCresponseP(x1,twoAFCStim(ii),[s1a s2a],pW,pNu,pGam,0);
         pf2_plot(ii) = get2AFCresponseP(x1,twoAFCStim(ii),[s1b s2b],pW,pNu,pGam,0);
         pf3_plot(ii) = get2AFCresponseP(x1,twoAFCStim(ii),[s1c s2c],pW,pNu,pGam,0);
+
     end
     
 end
@@ -112,7 +115,6 @@ set(gca,'fontsize',20,'plotboxaspectratio',[2 1 1],'xtick',[],'xlim',[suppLB sup
         'ytick',[],'ylim',[0 max([prior(:); p2a(:); p3a(:)])]);
 legend([pl1a pl2a pl3a],{'Prior','Likelihood 1','Likelihood 2'},'location','northwest','box','off');
 
-
 % Likelihood combination 2
 %------------------% 
 f2.Position = [300 100 650 650];
@@ -129,7 +131,6 @@ set(gca,'fontsize',20,'plotboxaspectratio',[2 1 1],'xtick',[],'xlim',[suppLB sup
         'ytick',[],'ylim',[0 max([prior(:); p2b(:); p3b(:)])]);
 legend([pl1b pl2b pl3b],{'Prior','Likelihood 1','Likelihood 2'},'location','northwest','box','off');
 
-
 % Likelihood combination 3
 %------------------% 
 f3.Position = [500 100 650 650];
@@ -145,7 +146,6 @@ pl3c = plot(supp,p3c,'color',[0.8 0.8 0.8],'linewidth',4);
 set(gca,'fontsize',20,'plotboxaspectratio',[2 1 1],'xtick',[],'xlim',[suppLB suppUB],...
         'ytick',[],'ylim',[0 max([prior(:); p2c(:); p3c(:)])]);
 legend([pl1c pl2c pl3c],{'Prior','Likelihood 1','Likelihood 2'},'location','northwest','box','off');
-
 
 % Psychometric function
 %------------------% 
@@ -171,7 +171,7 @@ ylabel('p(yes|x_{1},x_{2})');
 if saveOn
     
     splPath = regexp(which('Fig6_2AFC_MoGGauss_graphicalDemo'),filesep,'split');
-    topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
+    topDir  = [filesep,fullfile(splPath{1:numel(splPath)-1}),filesep];
     sDir = [topDir,'figuresImgs/fig6/'];
     
     if ~isfolder(sDir)
@@ -186,4 +186,142 @@ if saveOn
     saveas(f3b,[sDir,'like1Dc.svg']);
     saveas(f4,[sDir,'psychFxns.svg']);
     
+end
+
+%% Helper function for plotting/calculating psychometric functions
+function [p2AFC,db,f1] = get2AFCresponseP(x1,x2,sigL,wP,muP,sigP,plotOn)
+
+%% Make sure parameters are column vectors
+if ~iscolumn(wP)
+    wP = wP';
+end
+
+if ~iscolumn(muP)
+    muP = muP';
+end
+
+if ~iscolumn(sigP)
+    sigP = sigP';
+end
+
+
+%% Define numerical support
+
+% How many elements in 1D support?
+numElem = 100;
+
+% How many standard deviations to draw support out to?
+facSD   = 4;
+
+% Center joint likelihood over true stim and extend to 3SD
+m1 = x1 + facSD*sigL(1)*linspace(-1,1,numElem);
+m2 = x2 + facSD*sigL(2)*linspace(-1,1,numElem);
+
+dx = [diff(m1(1:2)) diff(m2(1:2))];
+
+
+%% Define helper functions
+alphaFxn = @(gam,sig)           gam.^2 ./ (gam.^2 + sig.^2);
+muFxn    = @(mu,gam,sig)        mu .* sig.^2 ./ (gam.^2 + sig.^2);
+vFxn     = @(w,gam,mus,sig,muL) w .* 1./sqrt(gam.^2 + sig.^2) .* normcdf((muL - mus) ./ sqrt(gam.^2 + sig.^2));
+wFxn     = @(w,gam,mus,sig,muL) vFxn(w,gam,mus,sig,muL)./sum(vFxn(w,gam,mus,sig,muL),2);
+
+postFxn  = @(supp,w,gam,nus,sig,m) ...
+            wFxn(w,gam,nus,sig,m)'*normpdf(supp,alphaFxn(gam,sig)*m + muFxn(nus,gam,sig),sqrt(alphaFxn(gam,sig))*sig);
+
+
+%% Get p(x2>x1|m1,m2) for each measurement pair in grid
+
+% Stim 1
+for ii = 1:numElem
+
+    % Stim 2
+    for jj = 1:numElem
+
+        % Make a grid of STIMULUS values about current measurements
+        thisM1 = m1(ii);
+        thisM2 = m2(jj);
+        
+        maxSig1 = max(sqrt(alphaFxn(sigP,sigL(1)))*sigL(1));
+        maxSig2 = max(sqrt(alphaFxn(sigP,sigL(2)))*sigL(2));
+        
+        theseX1 = thisM1 + facSD*maxSig1*linspace(-1,1,numElem);
+        theseX2 = thisM2 + facSD*maxSig2*linspace(-1,1,numElem);
+        [xM1,xM2] = meshgrid(theseX1,theseX2);
+        
+        % Compute posterior over grid for this set of measurements
+        thisPost1 = postFxn(theseX1,wP,sigP,muP,sigL(1),thisM1);
+        thisPost2 = postFxn(theseX2,wP,sigP,muP,sigL(2),thisM2);
+        
+        this2Dpost = thisPost2'*thisPost1;
+        this2Dpost = this2Dpost/sum(this2Dpost(:));
+        
+        % Sum probability over unity line to get p(x2>x1|m1,m2)
+        thisMask = xM2>xM1;
+        maskedPost = this2Dpost.*thisMask;
+        
+        post2AFC(jj,ii) = sum(maskedPost(:));
+        
+    end
+    
+end
+
+
+%% Define decision boundary and mask [i.e. p(x2>x1|m1,m2) > 0.5]
+
+% Want to also include half the probability from bins falling on the
+% boundary
+
+% decMask units: columns-m2 min to m2 max, rows- m1 min to m2 max
+
+decMask = post2AFC > 0.5;
+
+db1     = diff(decMask,[],1);
+db2     = diff(decMask,[],2);
+dbMask  = or([zeros(1,numElem);db1]<0,[zeros(numElem,1) db2]<0) == 1;
+
+[dbyInd,dbxInd] = find(dbMask);
+db = [m1(dbxInd);m2(dbyInd)];
+
+
+%% Get p(x2>x1|x1,x2) by summing joint likelihood above the decision boundary
+
+% Make joint likelihood
+like2D = normpdf(m2,x2,sigL(2))'*normpdf(m1,x1,sigL(1));
+like2D = like2D/sum(like2D(:));
+
+maskedP1 = like2D.*decMask;
+maskedP2 = like2D.*dbMask;
+p2AFC = sum(maskedP1(:)) + 0.5*sum(maskedP2(:));
+
+
+%% Plot if desired
+
+if plotOn
+   % Define gamma'd colormap to use for plots
+   cmap = repmat(linspace(0,1,256)'.^1.0,[1 3]);
+    
+   lb = max([m1(1) m2(1)]);
+   ub = min([m1(end) m2(end)]);
+    
+   f1 = figure;
+   f1.Position = [100 100 650 650];
+   hold on;
+   
+   imagesc(m1,m2,like2D); axis xy; axis image;
+   plot(db(1,:),db(2,:),'w','linewidth',5);
+   set(gca,'plotboxaspectratio',[1 1 1],'xtick',[],'ytick',[],'xlim',[lb ub],'ylim',[lb ub],'fontsize',20);
+%    set(gca,'xlim',[m1(1) m1(end)],'ylim',[m2(1) m2(end)],'fontsize',25);
+   xlabel('Stimulus 1 (x_{1})');
+   ylabel('Stimulus 2 (x_{2})');
+   text(db(1,1),db(2,28),'Yes','color',[1 1 1],'fontsize',40);
+   text(db(1,16),db(2,8),'No','color',[1 1 1],'fontsize',40);
+   colormap(cmap)
+
+else
+    
+    f1 = [];
+   
+end
+
 end

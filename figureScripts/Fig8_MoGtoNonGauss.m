@@ -31,7 +31,7 @@ prior = prior/sum(prior*dx); % normalize the prior to sum to 1
 %------------------%
 
 % Toggle on/off saving figures
-saveOn = 0;
+saveOn = 1;
 
 
 %% Compute posterior and BLS estimate for all possible measurements m
@@ -90,6 +90,9 @@ BLSestimhat = Mposthat*xgrid*dx;
 
 %% Make plots
 
+% Define gamma'd colormap to use for plots
+cmap = repmat(linspace(0,1,256)'.^1.4,[1 3]);
+
 % True and inferred prior
 %------------------% 
 f1 = figure;
@@ -133,6 +136,7 @@ set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',ylims*[-1 1],...
     'xtick',linspace(-ylims,ylims,5),'ylim',ylims*[-1 1],'ytick',linspace(-ylims,ylims,5));
 legend('True BLS estimate', 'location', 'northwest');
 ylabel('Measurement (m)');
+colormap(cmap);
 
 subplot(224); % inferred posterior
 imagesc(xgrid,mgrid,Mposthat); axis xy;
@@ -145,6 +149,7 @@ set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',ylims*[-1 1],...
     'xtick',linspace(-ylims,ylims,5),'ylim',ylims*[-1 1],'ytick',linspace(-ylims,ylims,5));
 legend('True BLS', 'Inferred BLS', 'location', 'northwest');
 xlabel('Stimulus (x)');  ylabel('Measurement (m)');
+colormap(cmap);
 
 
 %% Save figures
@@ -152,7 +157,7 @@ xlabel('Stimulus (x)');  ylabel('Measurement (m)');
 if saveOn
     
     splPath = regexp(which('Fig8_MoGtoNonGauss'),filesep,'split');
-    topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
+    topDir  = [filesep,fullfile(splPath{1:numel(splPath)-1}),filesep];
     sDir = [topDir,'figuresImgs/fig8/'];
     
     if ~isfolder(sDir)

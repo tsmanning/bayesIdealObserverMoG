@@ -75,13 +75,16 @@ gbasis   = gbasis./(dx*sum(gbasis));    % normalize so each sums to 1
 
 % Use maximum likelihood estimation to determine best fitting weights for
 % basis functions of MoG prior given the dataset
-[signsehat,priorhat,bwtshat,logliFinal,Mposthat] = fitBLSobserverModel_estimdata(xdat,xhat,gbasis,xgrid,mgrid);
+[signsehat,priorhat,bwtshat,logliFinal,Mposthat] = fitEstimData_numerical(xdat,xhat,gbasis,xgrid,mgrid);
 
 % inferred BLS estimate for each m value
 BLSestimhat = Mposthat*xgrid*dx; 
 
 
 %% Make plots
+
+% Define gamma'd colormap to use for plots
+cmap = repmat(linspace(0,1,256)'.^1.4,[1 3]);
 
 % True and inferred prior
 %------------------% 
@@ -126,6 +129,7 @@ set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',ylims*[-1 1],...
     'xtick',linspace(-ylims,ylims,5),'ylim',ylims*[-1 1],'ytick',linspace(-ylims,ylims,5));
 legend('True BLS estimate', 'location', 'northwest');
 ylabel('Measurement (m)');
+colormap(cmap);
 
 subplot(224); % inferred posterior
 imagesc(xgrid,mgrid,Mposthat); axis xy;
@@ -138,6 +142,7 @@ set(gca,'plotboxaspectratio',[1 1 1],'fontsize',20,'xlim',ylims*[-1 1],...
     'xtick',linspace(-ylims,ylims,5),'ylim',ylims*[-1 1],'ytick',linspace(-ylims,ylims,5));
 legend('True BLS', 'Inferred BLS', 'location', 'northwest');
 xlabel('Stimulus (x)');  ylabel('Measurement (m)');
+colormap(cmap);
 
 
 %% Save figures
@@ -145,7 +150,7 @@ xlabel('Stimulus (x)');  ylabel('Measurement (m)');
 if saveOn
     
     splPath = regexp(which('Fig8_MoGtoNonGauss2'),filesep,'split');
-    topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
+    topDir  = [filesep,fullfile(splPath{1:numel(splPath)-1}),filesep];
     sDir = [topDir,'figuresImgs/fig8/'];
     
     if ~isfolder(sDir)

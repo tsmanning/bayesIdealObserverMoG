@@ -37,6 +37,7 @@ end
 prior = prior/sum(prior*dx); % normalize the prior to sum to 1
 %------------------%
 
+
 %% Compute posterior and BLS estimate for all possible measurements m
 
 % Make a grid of stim and measurement values
@@ -53,6 +54,7 @@ ppost    = ppost./(sum(ppost,2)*dx); % normalized posterior
 BLSestim = ppost*xgrid*dx;           % BLS estimate for each m value
 
 JSD = nan(numDatasets,1);
+
 
 for ii = 1:numDatasets
 %% Simulate data from the model 

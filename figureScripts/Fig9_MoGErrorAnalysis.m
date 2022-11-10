@@ -16,7 +16,7 @@ saveOn = 0;
 splPath = regexp(which('Fig9_MoGErrorAnalysis'),filesep,'split');
 topDir  = [fullfile(splPath{1:numel(splPath)-2}),filesep];
 
-load([topDir,'longTail'],'estErrors','estErrSG','simMat')
+load([topDir,'errorAnalysis',filesep,'longTail'],'estErrors','estErrSG','simMat')
 
 
 %% Error scatters

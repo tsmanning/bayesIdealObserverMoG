@@ -33,7 +33,7 @@ alpha1a = (pGam^2)/(s1a^2 + pGam^2);
 alpha2a = (pGam^2)/(s2a^2 + pGam^2);
 
 % Create a joint likelihood distribution to plot
-like2Da = normpdf(supp,x1,s1a)'*normpdf(supp,x2,s2a);
+like2Da = normpdf(supp,x2,s2a)'*normpdf(supp,x1,s1a);
 
 % Create the single Gaussian prior and the two likelihoods
 prior = normpdf(supp,pNu,pGam);
@@ -48,7 +48,7 @@ s2b = 0.637;
 alpha1b = (pGam^2)/(s1b^2 + pGam^2);
 alpha2b = (pGam^2)/(s2b^2 + pGam^2);
 
-like2Db = normpdf(supp,x1,s1b)'*normpdf(supp,x2,s2b);
+like2Db = normpdf(supp,x2,s2b)'*normpdf(supp,x1,s1b);
 
 like1b = normpdf(supp,x1,s1b);
 like2b = normpdf(supp,x2,s2b);
@@ -61,7 +61,7 @@ s2c = 0.75;
 alpha1c = (pGam^2)/(s1c^2 + pGam^2);
 alpha2c = (pGam^2)/(s2c^2 + pGam^2);
 
-like2Dc = normpdf(supp,x1,s1c)'*normpdf(supp,x2,s2c);
+like2Dc = normpdf(supp,x2,s2c)'*normpdf(supp,x1,s1c);
 
 like1c = normpdf(supp,x1,s1c);
 like2c = normpdf(supp,x2,s2c);
@@ -79,6 +79,9 @@ twoAFCStim = suppLB:0.1:6;
 
 %% Plot figures
 
+% Define gamma'd colormap to use for plots
+cmap = repmat(linspace(0,1,256)'.^1.0,[1 3]);
+
 % Likelihood combination 1
 %------------------% 
 yMax = max(like2a(:));
@@ -95,6 +98,7 @@ set(gca,'fontsize',40,'plotboxaspectratio',[1 1 1],'xtick',[],'xlim',[suppLB sup
         'ytick',[],'ylim',[suppLB suppUB]);
 xlabel('Stimulus 1 (x_{1})');
 ylabel('Stimulus 2 (x_{2})');
+colormap(cmap);
 
 f1b = figure;
 f1b.Position = [100 200 650 325];
@@ -122,6 +126,7 @@ set(gca,'fontsize',40,'plotboxaspectratio',[1 1 1],'xtick',[],'xlim',[suppLB sup
         'ytick',[],'ylim',[suppLB suppUB]);
 xlabel('Stimulus 1 (x_{1})');
 ylabel('Stimulus 2 (x_{2})');
+colormap(cmap);
 
 f2b = figure;
 f2b.Position = [300 200 650 325];
@@ -149,6 +154,7 @@ set(gca,'fontsize',40,'plotboxaspectratio',[1 1 1],'xtick',[],'xlim',[suppLB sup
         'ytick',[],'ylim',[suppLB suppUB]);
 xlabel('Stimulus 1 (x_{1})');
 ylabel('Stimulus 2 (x_{2})');
+colormap(cmap);
 
 f3b = figure;
 f3b.Position = [300 200 650 325];
@@ -186,7 +192,7 @@ ylabel('p(yes|x_{1},x_{2})');
 if saveOn
     
     splPath = regexp(which('Fig4_2AFC_SinGauss_graphicalDemo'),filesep,'split');
-    topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
+    topDir  = [filesep,fullfile(splPath{1:numel(splPath)-1}),filesep];
     sDir = [topDir,'figuresImgs/fig4/'];
     
     if ~isfolder(sDir)

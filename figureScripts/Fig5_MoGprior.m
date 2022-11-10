@@ -4,7 +4,7 @@ clear all
 close all
 
 % Toggle on/off saving figures
-saveOn = 1;
+saveOn = 0;
 
 % Define numerical support
 dx = 0.01;

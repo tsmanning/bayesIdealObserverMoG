@@ -60,7 +60,11 @@ post1  = post2D(Lind1,:);
 post2  = post2D(Lind2,:); 
 
 
+
 %% Plot everything
+
+% Define gamma'd colormap to use for plots
+cmap = repmat(linspace(0,1,256)'.^1.4,[1 3]);
 
 % Prior 1D
 f1 = figure;
@@ -79,7 +83,7 @@ imagesc(x,m,prior2D); axis image; axis xy;
 set(gca,'fontsize',20,'plotboxaspectratio',[1 1 1],'xtick',[],'xlim',[x(1) x(end)],'ytick',[]);
 xlabel('Stimulus (x)');
 ylabel('Measurement (m)');
-colormap gray
+colormap(cmap);
 
 %---------------------------------%
 % Like/Measurement 2D
@@ -95,7 +99,7 @@ plot([x(Mind2) x(Mind2)],[x(1) x(end)],'color',[0 0.8 0],'linewidth',3);
 set(gca,'fontsize',20,'plotboxaspectratio',[1 1 1],'xtick',[],'xlim',[x(1) x(end)],'ytick',[]);
 xlabel('Stimulus (x)');
 ylabel('Measurement (m)');
-colormap gray
+colormap(cmap);
 
 % Likelihoods 1D
 f4a = figure;
@@ -143,7 +147,7 @@ plot([x(1) x(end)],[x(Lind2) x(Lind2)],'color',[0 0 1],'linewidth',3);
 set(gca,'fontsize',20,'plotboxaspectratio',[1 1 1],'xtick',[],'xlim',[x(1) x(end)],'ytick',[]);
 xlabel('Stimulus (x)');
 ylabel('Measurement (m)');
-colormap gray
+colormap(cmap);
 
 % Posteriors 1D
 f7a = figure;
@@ -168,7 +172,7 @@ ylabel('Probability');
 if saveOn
     
     splPath = regexp(which('Fig2_2DBayesianDemo'),filesep,'split');
-    topDir  = [fullfile(splPath{1:numel(splPath)-1}),filesep];
+    topDir  = [filesep,fullfile(splPath{1:numel(splPath)-1}),filesep];
     sDir    = [topDir,'figuresImgs/fig2/'];
     
     if ~isfolder(sDir)
