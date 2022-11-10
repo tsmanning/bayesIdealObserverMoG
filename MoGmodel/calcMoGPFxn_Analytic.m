@@ -1,7 +1,7 @@
 function [pFxn] = calcMoGPFxn_Analytic(priorMus,priorSigs,priorWs,mu1,sig1,mu2,sig2)
 
 % Given a 2D likelihood function, what's the probability of responding s2
-% instad of s1? Analytical approximation via Eqn 58.
+% instad of s1? Analytical approximation via Eqn 51.
 
 %% Correct dimensions
 

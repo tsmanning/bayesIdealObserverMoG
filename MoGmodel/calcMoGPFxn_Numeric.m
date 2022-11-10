@@ -1,7 +1,7 @@
 function [pFxn,decisionMask] = calcMoGPFxn_Numeric(support1,support2,priorMus,priorSigs,priorWs,mu1,sig1,mu2,sig2,plotOn)
 
 % Given a 2D likelihood function, what's the probability of responding s2
-% instad of s1? Approximated numerically with Eqn. 18 & 36
+% instad of s1? Evaluated numerically with Eqn. 25 & 33
 
 supportY = fliplr(support2);
 

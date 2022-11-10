@@ -1,5 +1,8 @@
 %% Fig 9/10 - inset of prior/likelihood selection process
 
+% Note: this script randomizes the stimuli and prior so the plots will
+% differ from those in the paper and each previous run. 
+
 clear all;
 close all;
 

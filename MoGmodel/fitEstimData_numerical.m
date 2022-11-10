@@ -3,7 +3,7 @@ function [signse,prihat,bwtshat,Lval,Mposthat] = fitEstimData_numerical(x,xhat,P
 % Fit Bayesian ideal observer model with fixed Gaussian noise from observer
 % estimate data, consisting of pairs of stimuli 'x' and observer estimates
 % 'x_hat'. Numerically calculates the negative log-likelihood of the data
-% using equation 48 from the main paper text.
+% using equation 43 from the main paper text.
 %
 % Inputs:
 % -------

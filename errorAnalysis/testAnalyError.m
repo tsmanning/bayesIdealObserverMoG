@@ -13,9 +13,6 @@ numSims = 5000;
 % numSims = 100;
 
 % Define bounds for stimuli/measurements
-%%%% might eliminate this since priors are calculated relative to
-%%%% likelihood and support is defined to capture full extent of
-%%%% distributions
 stimBnds    = [-1 1];
 
 % Define bounds for observer priors

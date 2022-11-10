@@ -48,7 +48,7 @@ BLSestim = ppost*xgrid*dx;           % BLS estimate for each m value
 
 % Randomly define a set of stimuli and randomly select a measurement value
 % for each stimulus presentation
-nsmps = 10;                                          % # of samples
+nsmps = 1000;                                          % # of samples
 xdat  = rand(nsmps,1)*diff(xtestrnge) + xtestrnge(1);  % stimuli
 mdat  = xdat + randn(nsmps,1)*lSig;                    % observer's noisy measurements
 
